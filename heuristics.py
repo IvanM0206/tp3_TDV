@@ -6,7 +6,7 @@ import statistics
 BIG_NUMBER = 1e100
 
 
-def travel_distance(path: List[int], graph: List[List[int]]) -> int:
+def travel_distance(graph: List[List[int]], path: List[int]) -> int:
     i = 0
     j = 1
     total_distance = 0
@@ -215,10 +215,95 @@ def greedy_min_edges(graph: List[List[int]]) -> List[int]:
     return path
 
 
-graph = create_graph(2)
+def swap(graph: List[List[int]], path: List[List[int]]) -> List[int]:
+    swap = None
+    best_improvement = 0
+    n = len(path)
+
+    # Almacena el siguiente y anterior nodo de cada nodo en el tour
+    next_node = [0] * n
+    prev_node = [0] * n
+
+    for i in range(n):
+        if i != n - 1:
+            next_node[i] = path[i + 1]
+        else:
+            next_node[i] = path[0]
+
+        if i != 0:
+            prev_node[i] = path[i - 1]
+        else:
+            prev_node[i] = path[n - 1]
+
+    # Para todo par de nodos en el camino
+    for i in range(n):
+        for j in range(n):
+            # Condición de mejora
+            current_distance = (
+                graph[prev_node[i]][path[i]]
+                + graph[path[i]][next_node[i]]
+                + graph[prev_node[j]][path[j]]
+                + graph[path[j]][next_node[j]]
+            )
+            new_distance = (
+                graph[prev_node[i]][path[j]]
+                + graph[path[j]][next_node[i]]
+                + graph[prev_node[j]][path[i]]
+                + graph[path[i]][next_node[j]]
+            )
+
+            improvement = current_distance - new_distance
+
+            is_better = improvement > 0 and improvement > best_improvement
+
+            if i != j and is_better:
+                best_improvement = improvement
+                swap = [i, j]
+
+    # Ejecutar swap
+    if swap is not None:
+        temp = path[swap[0]]
+        path[swap[0]] = path[swap[1]]
+        path[swap[1]] = temp
+
+    return path
+
+
+def swap_continuous(graph: List[List[int]], path: List[List[int]]) -> List[int]:
+    stop = False
+    count = 0
+    prev_improvement = 0
+    prev_path = path.copy()
+
+    while not stop:
+        print(path)
+        stop = True
+        count += 1
+        prev_path = path.copy()
+        path = swap(graph, path)
+        new_improvement = travel_distance(graph, prev_path) - travel_distance(
+            graph, path
+        )
+        print("IMPROVEMENT:", new_improvement)
+        if new_improvement > prev_improvement:
+            stop = False
+            prev_improvement = new_improvement
+
+    print(count, "iteraciones completadas")
+
+    return path
+
+
+graph = create_graph(0)
 print(graph)
+path = nearest_neighbor(cheapest_first_node(graph), graph)
 path = mean_neighbor(cheapest_first_node(graph), graph)
 path = greedy_min_edges_agm(graph)
+path = greedy_min_edges(graph)
 print(path)
-print("TRAVEL DISTANCE:", travel_distance(path, graph))
+print("TRAVEL DISTANCE:", travel_distance(graph, path))
 print(len(path))
+
+path = swap_continuous(graph, path)
+print(path)
+print("TRAVEL DISTANCE:", travel_distance(graph, path))

@@ -10,6 +10,8 @@ files_names = [
     "ftv38",
     "ftv44",
     "ftv47",
+    "ftv55",
+    "ftv64",
     "ftv70",
     "ftv170",
     "kro124p",
