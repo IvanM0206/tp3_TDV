@@ -21,10 +21,6 @@ files_names = [
     "ry48p",
 ]
 
-file_chosen = files_names[0]
-
-file = open(f"./ALL_atsp/{file_chosen}.atsp/{file_chosen}.atsp", "r", encoding="UTF-8")
-
 
 def search_numbers_in_txt(txt):
 
@@ -56,43 +52,50 @@ def search_numbers_in_txt(txt):
     return res
 
 
-matrix_distance: List[List[int]] = [[]]
-weight_data = False
-i = 0
-cant_vertex = 0
-for line in file:
+def create_graph(index) -> List[List[int]]:
+    file_chosen = files_names[index]
 
-    if "DIMENSION" in line:
-        list_dimension = search_numbers_in_txt(line)
-        cant_vertex = list_dimension[0]
-        print(cant_vertex)
+    file = open(
+        f"./ALL_atsp/{file_chosen}.atsp/{file_chosen}.atsp", "r", encoding="UTF-8"
+    )
 
-    if weight_data:
+    matrix_distance: List[List[int]] = [[]]
+    weight_data = False
+    i = 0
+    cant_vertex = 0
+    for line in file:
 
-        numbers_in_line = search_numbers_in_txt(line)
+        if "DIMENSION" in line:
+            list_dimension = search_numbers_in_txt(line)
+            cant_vertex = list_dimension[0]
+            print(cant_vertex)
 
-        cant_numbers_to_add = min(
-            len(numbers_in_line), cant_vertex - len(matrix_distance[i])
-        )
+        if weight_data:
 
-        if cant_numbers_to_add == cant_vertex - len(matrix_distance[i]):
-            agregar = True
-        else:
-            agregar = False
+            numbers_in_line = search_numbers_in_txt(line)
 
-        for number_pos in range(cant_numbers_to_add):
-            matrix_distance[i].append(numbers_in_line[number_pos])
+            cant_numbers_to_add = min(
+                len(numbers_in_line), cant_vertex - len(matrix_distance[i])
+            )
 
-        if agregar:
+            if cant_numbers_to_add == cant_vertex - len(matrix_distance[i]):
+                agregar = True
+            else:
+                agregar = False
 
-            i += 1
-            matrix_distance.append([])
+            for number_pos in range(cant_numbers_to_add):
+                matrix_distance[i].append(numbers_in_line[number_pos])
 
-        for number_pos in range(cant_numbers_to_add, len(numbers_in_line)):
-            matrix_distance[i].append(numbers_in_line[number_pos])
+            if agregar:
 
-    if "EDGE_WEIGHT_SECTION" in line:
-        weight_data = True
+                i += 1
+                matrix_distance.append([])
 
-matrix_distance.pop()
-print(matrix_distance, len(matrix_distance), len(matrix_distance[0]))
+            for number_pos in range(cant_numbers_to_add, len(numbers_in_line)):
+                matrix_distance[i].append(numbers_in_line[number_pos])
+
+        if "EDGE_WEIGHT_SECTION" in line:
+            weight_data = True
+
+    matrix_distance.pop()
+    return matrix_distance
