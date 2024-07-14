@@ -6,15 +6,13 @@ import statistics
 BIG_NUMBER = 1e100
 
 
-def travel_distance(graph: List[List[int]], path: List[int]) -> int:
+def travel_distance(graph: List[List[int]], tour: List[int]) -> int:
     i = 0
-    j = 1
     total_distance = 0
-    while j < len(path):
-        total_distance += graph[path[i]][path[j]]
+    while i < len(tour) - 1:
+        total_distance += graph[tour[i]][tour[i + 1]]
         i += 1
-        j += 1
-    total_distance += graph[path[len(path) - 1]][path[0]]
+    total_distance += graph[tour[len(tour) - 1]][tour[0]]
     return total_distance
 
 
@@ -35,26 +33,26 @@ def cheapest_first_node(graph: List[List[int]]) -> int:
 
 
 def nearest_neighbor(v: int, graph: List[List[int]]) -> List[int]:
-    path = [v]
+    tour = [v]
     not_visited = list(range(len(graph)))
     not_visited.remove(v)
     next_node = 0
 
-    while len(path) != len(graph):
+    while len(tour) != len(graph):
         min_distance = BIG_NUMBER
         for neighbor in not_visited:
             if graph[v][neighbor] < min_distance:
                 next_node = neighbor
                 min_distance = graph[v][neighbor]
-        path.append(next_node)
+        tour.append(next_node)
         not_visited.remove(next_node)
         v = neighbor
 
-    return path
+    return tour
 
 
 def mean_neighbor(v: int, graph: List[List[int]]) -> List[int]:
-    path = [v]
+    tour = [v]
     not_visited = list(range(len(graph)))
     not_visited.remove(v)
     next_node = 0
@@ -71,125 +69,22 @@ def mean_neighbor(v: int, graph: List[List[int]]) -> List[int]:
     mean_distance = statistics.mean(mean_distances)
     print(mean_distance)
 
-    while len(path) != len(graph):
+    while len(tour) != len(graph):
         min_diff = BIG_NUMBER
         for neighbor in not_visited:
             diff = abs(mean_distance - graph[v][neighbor])
             if diff < min_diff:
                 next_node = neighbor
                 min_diff = diff
-        path.append(next_node)
+        tour.append(next_node)
         not_visited.remove(next_node)
         v = neighbor
 
-    return path
-
-
-class UnionFind:
-    def __init__(self, n):
-        self.parent = list(range(n))
-        self.rank = [0] * n
-
-    def find(self, u):
-        if self.parent[u] != u:
-            self.parent[u] = self.find(self.parent[u])
-        return self.parent[u]
-
-    def union(self, u, v):
-        root_u = self.find(u)
-        root_v = self.find(v)
-        if root_u != root_v:
-            if self.rank[root_u] > self.rank[root_v]:
-                self.parent[root_v] = root_u
-            elif self.rank[root_u] < self.rank[root_v]:
-                self.parent[root_u] = root_v
-            else:
-                self.parent[root_v] = root_u
-                self.rank[root_u] += 1
-            return True
-        return False
-
-
-def greedy_min_edges_agm(graph: List[List[int]]) -> List[int]:
-    n = len(graph)
-    edges = []
-
-    # Crear una lista de todas las aristas con sus pesos
-    for i in range(n):
-        for j in range(n):
-            if i != j:
-                edges.append((graph[i][j], i, j))
-
-    # Ordenar las aristas por peso
-    edges.sort()
-
-    edges_path = []
-    in_degree = [0] * n
-    out_degree = [0] * n
-    union_find = UnionFind(n)
-    endpoints = {}
-
-    for weight, u, v in edges:
-        # Verificar si la arista (u, v) puede ser agregada sin formar un ciclo y sin romper la estructura hamiltoniana
-        if out_degree[u] == 0 and in_degree[v] == 0:
-            root_u = union_find.find(u)
-            root_v = union_find.find(v)
-
-            if root_u != root_v:
-                # Verificar si agregar esta arista cerrará un subciclo prematuro
-                if (
-                    u in endpoints
-                    and v in endpoints
-                    and union_find.find(endpoints[u]) == union_find.find(endpoints[v])
-                ):
-                    continue
-
-                edges_path.append((u, v))
-                out_degree[u] += 1
-                in_degree[v] += 1
-                union_find.union(u, v)
-
-                # Actualizar las puntas de los caminos
-                if u in endpoints:
-                    start = endpoints.pop(u)
-                else:
-                    start = u
-
-                if v in endpoints:
-                    end = endpoints.pop(v)
-                else:
-                    end = v
-
-                if start != end:
-                    endpoints[start] = end
-                    endpoints[end] = start
-
-                # Verificar si se ha completado el camino hamiltoniano
-                if len(edges_path) == n - 1:
-                    break
-
-    # Convertir el conjunto de aristas en un camino
-    for u in range(n):
-        if in_degree[u] == 0:
-            start_node = u
-
-    path = []
-    current_node = start_node
-    visited = set()
-    while len(path) < n:
-        path.append(current_node)
-        visited.add(current_node)
-        for u, v in edges_path:
-            if u == current_node:
-                next_node = v
-
-        current_node = next_node
-
-    return path
+    return tour
 
 
 def greedy_min_edges(graph: List[List[int]]) -> List[int]:
-    path = []
+    tour = []
     n = len(graph)
     edges = []
     not_visited = list(range(n))
@@ -203,22 +98,22 @@ def greedy_min_edges(graph: List[List[int]]) -> List[int]:
     edges.sort()
 
     for distance, u, v in edges:
-        if u not in path and v not in path:
-            path.append(u)
-            path.append(v)
+        if u not in tour and v not in tour:
+            tour.append(u)
+            tour.append(v)
             not_visited.remove(u)
             not_visited.remove(v)
 
-    if len(path) < n:
-        path.append(not_visited[0])
+    if len(tour) < n:
+        tour.append(not_visited[0])
 
-    return path
+    return tour
 
 
-def swap(graph: List[List[int]], path: List[List[int]]) -> List[int]:
+def swap(graph: List[List[int]], tour: List[List[int]]) -> List[int]:
     swap = None
     best_improvement = 0
-    n = len(path)
+    n = len(tour)
 
     # Almacena el siguiente y anterior nodo de cada nodo en el tour
     next_node = [0] * n
@@ -226,31 +121,55 @@ def swap(graph: List[List[int]], path: List[List[int]]) -> List[int]:
 
     for i in range(n):
         if i != n - 1:
-            next_node[i] = path[i + 1]
+            next_node[i] = tour[i + 1]
         else:
-            next_node[i] = path[0]
+            next_node[i] = tour[0]
 
         if i != 0:
-            prev_node[i] = path[i - 1]
+            prev_node[i] = tour[i - 1]
         else:
-            prev_node[i] = path[n - 1]
+            prev_node[i] = tour[n - 1]
 
     # Para todo par de nodos en el camino
-    for i in range(n):
-        for j in range(n):
+    for i in range(n - 1):
+        for j in range(i, n):
             # Condición de mejora
-            current_distance = (
-                graph[prev_node[i]][path[i]]
-                + graph[path[i]][next_node[i]]
-                + graph[prev_node[j]][path[j]]
-                + graph[path[j]][next_node[j]]
-            )
-            new_distance = (
-                graph[prev_node[i]][path[j]]
-                + graph[path[j]][next_node[i]]
-                + graph[prev_node[j]][path[i]]
-                + graph[path[i]][next_node[j]]
-            )
+            if next_node[i] == tour[j]:
+                current_distance = (
+                    graph[prev_node[i]][tour[i]]
+                    + graph[tour[i]][tour[j]]
+                    + graph[tour[j]][next_node[j]]
+                )
+                new_distance = (
+                    graph[prev_node[i]][tour[j]]
+                    + graph[tour[j]][tour[i]]
+                    + graph[tour[i]][next_node[j]]
+                )
+            elif next_node[j] == tour[i]:
+                current_distance = (
+                    graph[prev_node[j]][tour[j]]
+                    + graph[tour[j]][tour[i]]
+                    + graph[tour[i]][next_node[i]]
+                )
+                new_distance = (
+                    graph[prev_node[j]][tour[i]]
+                    + graph[tour[i]][tour[j]]
+                    + graph[tour[j]][next_node[i]]
+                )
+
+            else:
+                current_distance = (
+                    graph[prev_node[i]][tour[i]]
+                    + graph[tour[i]][next_node[i]]
+                    + graph[prev_node[j]][tour[j]]
+                    + graph[tour[j]][next_node[j]]
+                )
+                new_distance = (
+                    graph[prev_node[i]][tour[j]]
+                    + graph[tour[j]][next_node[i]]
+                    + graph[prev_node[j]][tour[i]]
+                    + graph[tour[i]][next_node[j]]
+                )
 
             improvement = current_distance - new_distance
 
@@ -262,48 +181,124 @@ def swap(graph: List[List[int]], path: List[List[int]]) -> List[int]:
 
     # Ejecutar swap
     if swap is not None:
-        temp = path[swap[0]]
-        path[swap[0]] = path[swap[1]]
-        path[swap[1]] = temp
+        temp = tour[swap[0]]
+        tour[swap[0]] = tour[swap[1]]
+        tour[swap[1]] = temp
 
-    return path
+    return tour
 
 
-def swap_continuous(graph: List[List[int]], path: List[List[int]]) -> List[int]:
+def swap_continuous(graph: List[List[int]], tour: List[List[int]]) -> List[int]:
     stop = False
     count = 0
     prev_improvement = 0
-    prev_path = path.copy()
+    prev_tour = tour.copy()
 
     while not stop:
-        print(path)
+        print(tour)
         stop = True
         count += 1
-        prev_path = path.copy()
-        path = swap(graph, path)
-        new_improvement = travel_distance(graph, prev_path) - travel_distance(
-            graph, path
+        tour = swap(graph, tour)
+        new_improvement = travel_distance(graph, prev_tour) - travel_distance(
+            graph, tour
         )
         print("IMPROVEMENT:", new_improvement)
         if new_improvement > prev_improvement:
             stop = False
             prev_improvement = new_improvement
+            prev_tour = tour.copy()
 
     print(count, "iteraciones completadas")
 
-    return path
+    return tour
+
+
+def relocate(graph: List[List[int]], tour: List[List[int]]) -> List[int]:
+    n = len(tour)
+    best_improvement = 0
+    relocation = None
+
+    # Almacena el siguiente y anterior nodo de cada nodo en el tour
+    next_node = [0] * n
+    prev_node = [0] * n
+
+    for i in range(n):
+        if i != n - 1:
+            next_node[i] = tour[i + 1]
+        else:
+            next_node[i] = tour[0]
+
+        if i != 0:
+            prev_node[i] = tour[i - 1]
+        else:
+            prev_node[i] = tour[n - 1]
+
+    # Para todo par de nodos en el camino
+    for i in range(n):
+        for j in range(n):
+            # Condición de mejora
+
+            current_distance = (
+                graph[prev_node[j]][tour[j]]
+                + graph[prev_node[i]][tour[i]]
+                + graph[tour[i]][next_node[i]]
+            )
+
+            new_distance = (
+                graph[prev_node[i]][next_node[i]]
+                + graph[prev_node[j]][tour[i]]
+                + graph[tour[i]][tour[j]]
+            )
+
+            improvement = current_distance - new_distance
+
+            is_better = improvement > 0 and improvement > best_improvement
+
+            if i != j and is_better:
+                best_improvement = improvement
+                relocation = [i, j]
+
+    # Ejecutar relocate
+    if relocation is not None:
+        target = tour[relocation[0]]
+        tour.pop(relocation[0])
+        tour.insert(relocation[1], target)
+
+    return tour
+
+
+def relocate_continuous(graph: List[List[int]], tour: List[List[int]]) -> List[int]:
+    stop = False
+    count = 0
+    prev_improvement = 0
+    prev_tour = tour.copy()
+
+    while not stop:
+        stop = True
+        count += 1
+        tour = relocate(graph, tour)
+        new_improvement = travel_distance(graph, prev_tour) - travel_distance(
+            graph, tour
+        )
+        print("IMPROVEMENT:", new_improvement)
+        if new_improvement > prev_improvement:
+            stop = False
+            prev_improvement = new_improvement
+            prev_tour = tour.copy()
+
+    print(count, "iteraciones completadas")
+
+    return prev_tour
 
 
 graph = create_graph(0)
-print(graph)
-path = nearest_neighbor(cheapest_first_node(graph), graph)
-path = mean_neighbor(cheapest_first_node(graph), graph)
-path = greedy_min_edges_agm(graph)
-path = greedy_min_edges(graph)
-print(path)
-print("TRAVEL DISTANCE:", travel_distance(graph, path))
-print(len(path))
+tour = nearest_neighbor(cheapest_first_node(graph), graph)
+# tour = mean_neighbor(cheapest_first_node(graph), graph)
+# tour = greedy_min_edges(graph)
+print(tour)
+print("TRAVEL DISTANCE:", travel_distance(graph, tour))
 
-path = swap_continuous(graph, path)
-print(path)
-print("TRAVEL DISTANCE:", travel_distance(graph, path))
+tour = relocate_continuous(graph, tour)
+tour = swap_continuous(graph, tour)
+print(tour)
+print("TRAVEL DISTANCE:", travel_distance(graph, tour))
