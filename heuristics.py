@@ -191,7 +191,7 @@ def swap(graph: List[List[int]], tour: List[List[int]]) -> List[int]:
 def swap_continuous(graph: List[List[int]], tour: List[List[int]]) -> List[int]:
     stop = False
     count = 0
-    prev_improvement = 0
+    total_improvement = 0
     prev_tour = tour.copy()
 
     while not stop:
@@ -203,9 +203,9 @@ def swap_continuous(graph: List[List[int]], tour: List[List[int]]) -> List[int]:
             graph, tour
         )
         print("IMPROVEMENT:", new_improvement)
-        if new_improvement > prev_improvement:
+        if new_improvement > 0:
             stop = False
-            prev_improvement = new_improvement
+            total_improvement += new_improvement
             prev_tour = tour.copy()
 
     print(count, "iteraciones completadas")
@@ -270,7 +270,7 @@ def relocate(graph: List[List[int]], tour: List[List[int]]) -> List[int]:
 def relocate_continuous(graph: List[List[int]], tour: List[List[int]]) -> List[int]:
     stop = False
     count = 0
-    prev_improvement = 0
+    total_improvement = 0
     prev_tour = tour.copy()
 
     while not stop:
@@ -281,9 +281,9 @@ def relocate_continuous(graph: List[List[int]], tour: List[List[int]]) -> List[i
             graph, tour
         )
         print("IMPROVEMENT:", new_improvement)
-        if new_improvement > prev_improvement:
+        if new_improvement > 0:
             stop = False
-            prev_improvement = new_improvement
+            total_improvement += new_improvement
             prev_tour = tour.copy()
 
     print(count, "iteraciones completadas")
@@ -291,14 +291,86 @@ def relocate_continuous(graph: List[List[int]], tour: List[List[int]]) -> List[i
     return prev_tour
 
 
-graph = create_graph(0)
+def two_opt(graph: List[List[int]], tour: List[List[int]]) -> List[int]:
+    n = len(tour)
+    s = [0] * n
+    two_change = None
+    best_improvement = 0
+
+    for i in range(1, n):
+        s[i] = s[i - 1] + graph[tour[i - 1]][tour[i]]
+
+    rev_s = [0] * n
+    for i in range(1, n - 1):
+        rev_s[n - i - 1] = rev_s[n - i] + graph[tour[n - i]][tour[n - i - 1]]
+
+    for i in range(n - 3):
+        j = i + 1
+        for k in range(i + 2, n - 1):
+            l = k + 1
+
+            different = i != j != k != l
+
+            current_distance = (
+                graph[tour[i]][tour[j]] + s[k] - s[j] + graph[tour[k]][tour[l]]
+            )
+
+            new_distance = (
+                graph[tour[i]][tour[k]] + rev_s[j] - rev_s[k] + graph[tour[j]][tour[l]]
+            )
+
+            improvement = current_distance - new_distance
+
+            is_better = improvement > 0 and improvement > best_improvement
+
+            if different and is_better:
+                best_improvement = improvement
+                two_change = [j, k]
+
+    if two_change is not None:
+        tour = (
+            tour[0 : two_change[0]]
+            + tour[two_change[0] : two_change[1] + 1][::-1]
+            + tour[two_change[1] + 1 :]
+        )
+    return tour
+
+
+def two_opt_continuous(graph: List[List[int]], tour: List[List[int]]) -> List[int]:
+    stop = False
+    count = 0
+    total_improvement = 0
+    prev_tour = tour.copy()
+
+    while not stop:
+        print(tour)
+        stop = True
+        count += 1
+        tour = two_opt(graph, tour)
+        new_improvement = travel_distance(graph, prev_tour) - travel_distance(
+            graph, tour
+        )
+
+        if new_improvement > 0:
+            stop = False
+            total_improvement += new_improvement
+            prev_tour = tour.copy()
+
+    print(count, "iteraciones completadas")
+    print("IMPROVEMENT:", total_improvement)
+
+    return prev_tour
+
+
+graph = create_graph(18)
 tour = nearest_neighbor(cheapest_first_node(graph), graph)
 # tour = mean_neighbor(cheapest_first_node(graph), graph)
 # tour = greedy_min_edges(graph)
 print(tour)
 print("TRAVEL DISTANCE:", travel_distance(graph, tour))
 
-tour = relocate_continuous(graph, tour)
-tour = swap_continuous(graph, tour)
+# tour = relocate_continuous(graph, tour)
+# tour = swap_continuous(graph, tour)
+tour = two_opt_continuous(graph, tour)
 print(tour)
 print("TRAVEL DISTANCE:", travel_distance(graph, tour))
