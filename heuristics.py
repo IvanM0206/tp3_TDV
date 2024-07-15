@@ -110,6 +110,17 @@ def greedy_min_edges(graph: List[List[int]]) -> List[int]:
     return tour
 
 
+def regular_tour(graph: List[List[int]]) -> List[int]:
+    n = len(graph)
+    tour = []
+    for i in range(n):
+        tour.append(i)
+    return tour
+
+
+# Operadores
+
+
 def swap(graph: List[List[int]], tour: List[List[int]]) -> List[int]:
     swap = None
     best_improvement = 0
@@ -362,6 +373,7 @@ def two_opt_continuous(graph: List[List[int]], tour: List[List[int]]) -> List[in
     return prev_tour
 
 
+"""
 graph = create_graph(18)
 tour = nearest_neighbor(cheapest_first_node(graph), graph)
 # tour = mean_neighbor(cheapest_first_node(graph), graph)
@@ -374,3 +386,4 @@ print("TRAVEL DISTANCE:", travel_distance(graph, tour))
 tour = two_opt_continuous(graph, tour)
 print(tour)
 print("TRAVEL DISTANCE:", travel_distance(graph, tour))
+"""

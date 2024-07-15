@@ -1,6 +1,6 @@
-import sys
 from graph_creator import *
 from heuristics import *
+import argparse
 
 INSTANCES = [
     "br17",
@@ -23,106 +23,62 @@ INSTANCES = [
 ]
 
 
-def print_usage():
-    usage_message = """
-    Uso:
-        main.py -CONSTRUCTOR (-OPERADOR) <instancia>
-    
-    Opciones:
-        -CONSTRUCTOR    Constructores disponibles: ...
-        -OPERADOR Operadores disponibles: ...
-        <instancia> Instancias disponibles: {}
-    """.format(
-        ", ".join(INSTANCES)
-    )
-
-    print(usage_message)
-
-
 def main():
-    limitation = 0
-    if (
-        len(sys.argv) < 3
-        or sys.argv[1] not in ("-i", "--instance")
-        or sys.argv[2] in ("-h", "--help")
-    ):
-        print_usage()
-        sys.exit(1)
+    parser = argparse.ArgumentParser(description="Heurísticas para ATSP")
 
-    instance_name = sys.argv[2]
-
-    if instance_name not in INSTANCES:
-        print(f"Error: '{instance_name}' no es un nombre de instancia válido.")
-        print_usage()
-        sys.exit(1)
-
-    instance = load_instance(instance_name)
-
-    if len(sys.argv) == 6 and (
-        sys.argv[3] in ("-l1", "--limitation1")
-        or sys.argv[3]
-        in (
-            "-l2",
-            "--limitation2",
-        )
-    ):
-        if not (sys.argv[4].isnumeric() or sys.argv[5].isnumeric()):
-            print(
-                f"Error: las limitaciones toman la forma de  -l1/-l2 indice-estación limitación-unidades. Ej: -l1 1 30"
-            )
-            print_usage()
-            sys.exit(1)
-
-        # Definir valores para el upper_bound (capacidad) de la arista de trasnoche correspondiente a target_station (estación de cabecera)
-        target_station = instance["stations"][int(sys.argv[4])]
-        upper_bound = int(sys.argv[5])
-        limitation = 1 if sys.argv[3] in ("-l1", "--limitation1") else 2
-
-    elif len(sys.argv) != 3:
-        print_usage()
-        sys.exit(1)
-
-    # Construimos el grafo con el cambio de variable necesario
-
-    G, colors, pos, labels, border_colors, edge_colors, services_by_station = (
-        add_services(instance)
+    # Required arguments
+    parser.add_argument(
+        "-i",
+        "--instancia",
+        required=True,
+        choices=INSTANCES,
+        help="Se debe especificar el nombre de la instancia objetivo.",
+    )
+    parser.add_argument(
+        "-c",
+        "--constructor",
+        choices=["nn", "mn", "gme", "r"],
+        required=True,
+        help="Por favor seleccionar alguno de los constructores disponibles. nn: nearest neighbor, mn: mean neighbor, gme: greedy min edges, r: tour regular factible trivial.",
     )
 
-    G, night_edges = add_night_pass_edges(G, instance, edge_colors, services_by_station)
-
-    # Agregamos una limitación de ser necesario.
-
-    if limitation == 1:
-        G = add_limitation(G, target_station, upper_bound)
-    elif limitation == 2:
-        G, pos, night_edges, colors, edge_colors, border_colors = add_limitation2(
-            instance, G, target_station, upper_bound, colors, edge_colors, border_colors
-        )
-
-    # Ejecutamos el algoritmo para obtener el flujo de costo minimo satisfaciendo los imbalances
-    minCostFlow = nx.min_cost_flow(
-        G, demand="demand", capacity="upper_bound", weight="weight"
+    # Optional arguments (up to 3)
+    parser.add_argument(
+        "-o",
+        "--operadores",
+        nargs="+",
+        choices=["r", "s", "2o"],
+        help="Especificar los operadores de búsqueda local deseados. r: relocate, s: swap, 2o: 2-opt.",
     )
-    minCost = nx.cost_of_flow(G, minCostFlow)
 
-    # Recuperamos el flujo en el grafo original (sin cambio de variable)
-    for i in minCostFlow:
-        for j in minCostFlow[i]:
-            minCostFlow[i][j] += G[i][j]["amount_modified"]
+    args = parser.parse_args()
 
-    print("minCostFlow: {}\nminCost: {}".format(minCostFlow, minCost))
+    instance = args.instancia
+    graph = create_graph(INSTANCES.index(instance))
 
-    # Mostramos el grafo
-    visualize_graph(
-        G,
-        colors,
-        pos,
-        labels,
-        border_colors,
-        edge_colors,
-        night_edges,
-        minCostFlow,
-    )
+    # Execute the chosen constructor function
+    if args.constructor == "nn":
+        tour = nearest_neighbor(graph)
+    elif args.constructor == "mn":
+        tour = mean_neighbor(graph)
+    elif args.constructor == "gme":
+        tour = greedy_min_edges(graph)
+    elif args.constructor == "r":
+        tour = regular_tour(graph)
+
+    # Execute the chosen operator functions if provided
+    if args.operadores:
+        for operador in args.operadores:
+            if operador == "r":
+                tour = relocate_continuous(graph, tour)
+            elif operador == "s":
+                tour = swap_continuous(graph, tour)
+            elif operador == "2o":
+                tour = two_opt_continuous(graph, tour)
+
+    # agregar print tour y resultado
+    print(tour)
+    print(travel_distance(graph, tour))
 
 
 if __name__ == "__main__":
