@@ -1,8 +1,10 @@
 from typing import List, Dict, Tuple
 import math
 
+
 def norma(vector1: Tuple[float, float], vector2: Tuple[float, float]):
-    return math.sqrt((vector1[0] - vector2[0])**2 + (vector1[1] - vector2[1])**2)
+    return math.sqrt((vector1[0] - vector2[0]) ** 2 + (vector1[1] - vector2[1]) ** 2)
+
 
 def search_values(txt):
 
@@ -33,11 +35,12 @@ def search_values(txt):
 
     return res
 
+
 def convert_data():
-    
+
     file = open("./ar9152.tsp", "r", encoding="UTF-8")
 
-    nodes_coord = False
+    target_line = False
 
     res: List[List[float]] = []
 
@@ -45,23 +48,29 @@ def convert_data():
 
     for line in file:
 
-        if nodes_coord:
+        if target_line and "EOF" not in line:
 
             values_line = search_values(line)
-            res.append([])
-            nodes_coord[str(values_line[0])] = (values_line[1], values_line[2])
-
-            for neighbor in range(1, values_line[0]):
-                distance = norma(nodes_coord[values_line[0]], nodes_coord[neighbor])
-                res[values_line[0]-1][neighbor-1] = distance
-                res[values_line[0]-1][neighbor-1] = distance
-
-
-            res[values_line[0]-1][values_line[0]-1] = 0
+            res.append([0] * n)
+            nodes_coord[values_line[0]] = (values_line[1], values_line[2])
 
         if "NODE_COORD_SECTION" in line:
-            nodes_coord = True
+            target_line = True
+
+        if "DIMENSION" in line:
+            n = int(search_values(line)[0])
+
+    for node in range(n):
+        for neighbor in range(n):
+            distance = norma(
+                nodes_coord[float(node + 1)], nodes_coord[float(neighbor + 1)]
+            )
+            res[node - 1][neighbor - 1] = distance
+            res[node - 1][neighbor - 1] = distance
+
+            res[node - 1][node - 1] = 0
 
     return res
 
-print(convert_data())
+
+print(len(convert_data()))

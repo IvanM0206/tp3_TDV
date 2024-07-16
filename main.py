@@ -1,6 +1,8 @@
 from graph_creator import *
 from heuristics import *
 import argparse
+import arg_data_to_atsp
+import time
 
 INSTANCES = [
     "br17",
@@ -20,6 +22,7 @@ INSTANCES = [
     "rbg403",
     "rbg443",
     "ry48p",
+    "ar9125",
 ]
 
 
@@ -39,7 +42,7 @@ def main():
         "--constructor",
         choices=["nn", "mn", "gme", "r"],
         required=True,
-        help="Por favor seleccionar alguno de los constructores disponibles. nn: nearest neighbor, mn: mean neighbor, gme: greedy min edges, r: tour regular factible trivial.",
+        help="Por favor seleccionar alguno de los constructores disponibles. nn: nearest neighbor, mn: mean neighbor, mp: min distance pair, r: tour regular factible trivial.",
     )
 
     # Optional arguments (up to 3)
@@ -54,8 +57,14 @@ def main():
     args = parser.parse_args()
 
     instance = args.instancia
-    graph = create_graph(INSTANCES.index(instance))
+    print("Instancia cargada:", instance)
+    if instance == "ar9125":
+        graph = arg_data_to_atsp.convert_data()
+    else:
+        graph = create_graph(INSTANCES.index(instance))
+    print("Dimensión del grafo:", len(graph))
 
+    start = time.time()
     # Execute the chosen constructor function
     if args.constructor == "nn":
         tour = nearest_neighbor(graph)
@@ -75,10 +84,12 @@ def main():
                 tour = swap_continuous(graph, tour)
             elif operador == "2o":
                 tour = two_opt_continuous(graph, tour)
+    end = time.time()
 
     # agregar print tour y resultado
-    print(tour)
-    print(travel_distance(graph, tour))
+    print("Camino:", tour)
+    print("Distancia:", travel_distance(graph, tour))
+    print("Tiempo de ejecución:", end - start)
 
 
 if __name__ == "__main__":
