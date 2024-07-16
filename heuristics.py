@@ -1,6 +1,5 @@
 from typing import List
 import random
-from graph_creator import create_graph
 import statistics
 
 BIG_NUMBER = 1e100
@@ -67,7 +66,6 @@ def mean_neighbor(v: int, graph: List[List[int]]) -> List[int]:
         i += 1
 
     mean_distance = statistics.mean(mean_distances)
-    print(mean_distance)
 
     while len(tour) != len(graph):
         min_diff = BIG_NUMBER
@@ -199,86 +197,7 @@ def swap(graph: List[List[int]], tour: List[List[int]]) -> List[int]:
     return tour
 
 
-def swap_continuous(graph: List[List[int]], tour: List[List[int]]) -> List[int]:
-    stop = False
-    count = 0
-    total_improvement = 0
-    prev_tour = tour.copy()
-
-    while not stop:
-        print(tour)
-        stop = True
-        count += 1
-        tour = swap(graph, tour)
-        new_improvement = travel_distance(graph, prev_tour) - travel_distance(
-            graph, tour
-        )
-        print("IMPROVEMENT:", new_improvement)
-        if new_improvement > 0:
-            stop = False
-            total_improvement += new_improvement
-            prev_tour = tour.copy()
-
-    print(count, "iteraciones completadas")
-
-    return tour
-
-
-def relocate(graph: List[List[int]], tour: List[List[int]]) -> List[int]:
-    n = len(tour)
-    best_improvement = 0
-    relocation = None
-
-    # Almacena el siguiente y anterior nodo de cada nodo en el tour
-    next_node = [0] * n
-    prev_node = [0] * n
-
-    for i in range(n):
-        if i != n - 1:
-            next_node[i] = tour[i + 1]
-        else:
-            next_node[i] = tour[0]
-
-        if i != 0:
-            prev_node[i] = tour[i - 1]
-        else:
-            prev_node[i] = tour[n - 1]
-
-    # Para todo par de nodos en el camino
-    for i in range(n):
-        for j in range(n):
-            # Condición de mejora
-
-            current_distance = (
-                graph[prev_node[j]][tour[j]]
-                + graph[prev_node[i]][tour[i]]
-                + graph[tour[i]][next_node[i]]
-            )
-
-            new_distance = (
-                graph[prev_node[i]][next_node[i]]
-                + graph[prev_node[j]][tour[i]]
-                + graph[tour[i]][tour[j]]
-            )
-
-            improvement = current_distance - new_distance
-
-            is_better = improvement > 0 and improvement > best_improvement
-
-            if i != j and is_better:
-                best_improvement = improvement
-                relocation = [i, j]
-
-    # Ejecutar relocate
-    if relocation is not None:
-        target = tour[relocation[0]]
-        tour.pop(relocation[0])
-        tour.insert(relocation[1], target)
-
-    return tour
-
-
-def relocate_continuous(graph: List[List[int]], tour: List[List[int]]) -> List[int]:
+def local_search(graph: List[List[int]], tour: List[List[int]], f) -> List[int]:
     stop = False
     count = 0
     total_improvement = 0
@@ -287,11 +206,10 @@ def relocate_continuous(graph: List[List[int]], tour: List[List[int]]) -> List[i
     while not stop:
         stop = True
         count += 1
-        tour = relocate(graph, tour)
+        tour = f(graph, tour)
         new_improvement = travel_distance(graph, prev_tour) - travel_distance(
             graph, tour
         )
-        print("IMPROVEMENT:", new_improvement)
         if new_improvement > 0:
             stop = False
             total_improvement += new_improvement
@@ -347,30 +265,58 @@ def two_opt(graph: List[List[int]], tour: List[List[int]]) -> List[int]:
     return tour
 
 
-def two_opt_continuous(graph: List[List[int]], tour: List[List[int]]) -> List[int]:
-    stop = False
-    count = 0
-    total_improvement = 0
-    prev_tour = tour.copy()
+def relocate(graph: List[List[int]], tour: List[List[int]]) -> List[int]:
+    n = len(tour)
+    best_improvement = 0
+    relocation = None
 
-    while not stop:
-        print(tour)
-        stop = True
-        count += 1
-        tour = two_opt(graph, tour)
-        new_improvement = travel_distance(graph, prev_tour) - travel_distance(
-            graph, tour
-        )
+    # Almacena el siguiente y anterior nodo de cada nodo en el tour
+    next_node = [0] * n
+    prev_node = [0] * n
 
-        if new_improvement > 0:
-            stop = False
-            total_improvement += new_improvement
-            prev_tour = tour.copy()
+    for i in range(n):
+        if i != n - 1:
+            next_node[i] = tour[i + 1]
+        else:
+            next_node[i] = tour[0]
 
-    print(count, "iteraciones completadas")
-    print("IMPROVEMENT:", total_improvement)
+        if i != 0:
+            prev_node[i] = tour[i - 1]
+        else:
+            prev_node[i] = tour[n - 1]
 
-    return prev_tour
+    # Para todo par de nodos en el camino
+    for i in range(n):
+        for j in range(n):
+            # Condición de mejora
+
+            current_distance = (
+                graph[prev_node[j]][tour[j]]
+                + graph[prev_node[i]][tour[i]]
+                + graph[tour[i]][next_node[i]]
+            )
+
+            new_distance = (
+                graph[prev_node[i]][next_node[i]]
+                + graph[prev_node[j]][tour[i]]
+                + graph[tour[i]][tour[j]]
+            )
+
+            improvement = current_distance - new_distance
+
+            is_better = improvement > 0 and improvement > best_improvement
+
+            if i != j and is_better:
+                best_improvement = improvement
+                relocation = [i, j]
+
+    # Ejecutar relocate
+    if relocation is not None:
+        target = tour[relocation[0]]
+        tour.pop(relocation[0])
+        tour.insert(relocation[1], target)
+
+    return tour
 
 
 """

@@ -2,7 +2,7 @@ from typing import List, Dict, Tuple
 import math
 
 
-def norma(vector1: Tuple[float, float], vector2: Tuple[float, float]):
+def point_distance(vector1: Tuple[float, float], vector2: Tuple[float, float]):
     return math.sqrt((vector1[0] - vector2[0]) ** 2 + (vector1[1] - vector2[1]) ** 2)
 
 
@@ -60,17 +60,14 @@ def convert_data():
         if "DIMENSION" in line:
             n = int(search_values(line)[0])
 
-    for node in range(n):
-        for neighbor in range(n):
-            distance = norma(
-                nodes_coord[float(node + 1)], nodes_coord[float(neighbor + 1)]
+    for node in range(1, n + 1):
+        for neighbor in range(1, n + 1):
+            distance = point_distance(
+                nodes_coord[float(node)], nodes_coord[float(neighbor)]
             )
             res[node - 1][neighbor - 1] = distance
-            res[node - 1][neighbor - 1] = distance
+            res[neighbor - 1][node - 1] = distance
 
             res[node - 1][node - 1] = 0
 
     return res
-
-
-print(len(convert_data()))

@@ -22,7 +22,7 @@ INSTANCES = [
     "rbg403",
     "rbg443",
     "ry48p",
-    "ar9125",
+    "ar9152",
 ]
 
 
@@ -40,7 +40,7 @@ def main():
     parser.add_argument(
         "-c",
         "--constructor",
-        choices=["nn", "mn", "gme", "r"],
+        choices=["nn", "mn", "mp", "r"],
         required=True,
         help="Por favor seleccionar alguno de los constructores disponibles. nn: nearest neighbor, mn: mean neighbor, mp: min distance pair, r: tour regular factible trivial.",
     )
@@ -58,7 +58,7 @@ def main():
 
     instance = args.instancia
     print("Instancia cargada:", instance)
-    if instance == "ar9125":
+    if instance == "ar9152":
         graph = arg_data_to_atsp.convert_data()
     else:
         graph = create_graph(INSTANCES.index(instance))
@@ -67,23 +67,30 @@ def main():
     start = time.time()
     # Execute the chosen constructor function
     if args.constructor == "nn":
-        tour = nearest_neighbor(graph)
+        print("Constructor: vecino más cercano")
+        tour = nearest_neighbor(0, graph)
     elif args.constructor == "mn":
-        tour = mean_neighbor(graph)
-    elif args.constructor == "gme":
+        print("Constructor: vecino promedio")
+        tour = mean_neighbor(0, graph)
+    elif args.constructor == "mp":
+        print("Constructor: pares de distancia mínima")
         tour = greedy_min_edges(graph)
     elif args.constructor == "r":
+        print("Constructor: trivial")
         tour = regular_tour(graph)
 
     # Execute the chosen operator functions if provided
     if args.operadores:
         for operador in args.operadores:
             if operador == "r":
-                tour = relocate_continuous(graph, tour)
+                print("Operador: relocate")
+                tour = local_search(graph, tour, relocate)
             elif operador == "s":
-                tour = swap_continuous(graph, tour)
+                print("Operador: swap")
+                tour = local_search(graph, tour, swap)
             elif operador == "2o":
-                tour = two_opt_continuous(graph, tour)
+                print("Operador: 2-opt")
+                tour = local_search(graph, tour, two_opt)
     end = time.time()
 
     # agregar print tour y resultado

@@ -1,27 +1,5 @@
 from typing import List
-
-
-files_names = [
-    "br17",
-    "ft53",
-    "ft70",
-    "ftv33",
-    "ftv35",
-    "ftv38",
-    "ftv44",
-    "ftv47",
-    "ftv55",
-    "ftv64",
-    "ftv70",
-    "ftv170",
-    "kro124p",
-    "p43",
-    "rbg323",
-    "rbg358",
-    "rbg403",
-    "rbg443",
-    "ry48p",
-]
+from main import INSTANCES
 
 
 def search_numbers_in_txt(txt):
@@ -55,7 +33,7 @@ def search_numbers_in_txt(txt):
 
 
 def create_graph(index) -> List[List[int]]:
-    file_chosen = files_names[index]
+    file_chosen = INSTANCES[index]
 
     file = open(
         f"./ALL_atsp/{file_chosen}.atsp/{file_chosen}.atsp", "r", encoding="UTF-8"
@@ -70,7 +48,6 @@ def create_graph(index) -> List[List[int]]:
         if "DIMENSION" in line:
             list_dimension = search_numbers_in_txt(line)
             cant_vertex = list_dimension[0]
-            print(cant_vertex)
 
         if weight_data:
 
